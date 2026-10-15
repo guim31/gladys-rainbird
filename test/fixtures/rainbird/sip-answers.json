@@ -1,0 +1,75 @@
+{
+  "source": "Hex answers of real controllers, as recorded in the tests of allenporter/pyrainbird (MIT, tests/testdata/*.yaml) and home-assistant/core (Apache-2.0, tests/components/rainbird/conftest.py). Serial numbers are the test values of those projects.",
+  "modelAndVersion": [
+    {
+      "data": "820005090C",
+      "expected": { "modelId": 5, "major": 9, "minor": 12 },
+      "note": "ESP-TM2 (HA)"
+    },
+    {
+      "data": "820006090C",
+      "expected": { "modelId": 6, "major": 9, "minor": 12 },
+      "note": "ST8x-WiFi (pyrainbird)"
+    }
+  ],
+  "availableStations": [
+    { "data": "83017F000000", "page": 0, "zones": [1, 2, 3, 4, 5, 6, 7], "note": "7 zones (HA)" },
+    {
+      "data": "83003F000000",
+      "page": 0,
+      "zones": [1, 2, 3, 4, 5, 6],
+      "note": "6 zones (pyrainbird)"
+    },
+    { "data": "830000000000", "page": 0, "zones": [], "note": "no zone (HA)" }
+  ],
+  "activeStations": [
+    { "data": "BF0004000000", "page": 0, "zones": [3], "note": "zone 3 on (HA)" },
+    { "data": "BF0010000000", "page": 0, "zones": [5], "note": "zone 5 on (HA)" },
+    { "data": "BF0000000000", "page": 0, "zones": [], "note": "all off (HA)" }
+  ],
+  "rainSensor": [
+    { "data": "BE00", "expected": { "raining": false } },
+    { "data": "BE01", "expected": { "raining": true } }
+  ],
+  "rainDelay": [
+    { "data": "B60003", "expected": { "days": 3 } },
+    { "data": "B6000E", "expected": { "days": 14 } },
+    { "data": "B60010", "expected": { "days": 16 } },
+    { "data": "B60000", "expected": { "days": 0 } }
+  ],
+  "serialNumber": [
+    { "data": "850000012635436566", "expected": { "serial": "0000012635436566" } },
+    { "data": "850000000000000000", "expected": { "serial": "0000000000000000" } }
+  ],
+  "firmwareVersion": [
+    { "data": "8B012F0000", "expected": { "major": 1, "minor": 47, "patch": 0 } }
+  ],
+  "acknowledge": ["0106", "0137", "0139", "0140"],
+  "nack": [{ "data": "000203", "note": "command 0x02 refused, reason 3 (pyrainbird)" }],
+  "requests": [
+    { "command": "runStation", "args": [5, 30], "data": "3900051E", "length": 4 },
+    { "command": "runProgram", "args": [5], "data": "3805", "length": 2 },
+    { "command": "setRainDelay", "args": [3], "data": "370003", "length": 3 },
+    { "command": "stopIrrigation", "args": [], "data": "40", "length": 1 },
+    { "command": "activeStations", "args": [0], "data": "3F00", "length": 2 },
+    { "command": "availableStations", "args": [0], "data": "0300", "length": 2 },
+    { "command": "modelAndVersion", "args": [], "data": "02", "length": 1 }
+  ],
+  "wifiParams": {
+    "note": "Shape of the getWifiParams answer of a Rain Bird Stick Rev C (home-assistant/core tests), anonymized: invented MAC, documentation addresses, placeholder Wi-Fi settings.",
+    "result": {
+      "macAddress": "02:00:5E:10:00:01",
+      "localIpAddress": "192.0.2.38",
+      "localNetmask": "255.255.255.0",
+      "localGateway": "192.0.2.1",
+      "rssi": -61,
+      "wifiSsid": "fixture-ssid",
+      "wifiPassword": "fixture-wifi-password",
+      "wifiSecurity": "wpa2-aes",
+      "apTimeoutNoLan": 20,
+      "apTimeoutIdle": 20,
+      "apSecurity": "unknown",
+      "stickVersion": "Rain Bird Stick Rev C/1.63"
+    }
+  }
+}

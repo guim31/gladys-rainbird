@@ -30,6 +30,26 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+What the integration handles:
+
+- **Secrets**: the module passwords of the Rain Bird controllers are `secret`
+  fields of the Gladys configuration. The integration reads them from Gladys at
+  startup, keeps them in memory, and uses them only to encrypt and decrypt the
+  exchanges with the module they belong to: a password never travels on the
+  network, and is never written to `/data` nor to the logs. The answer of the
+  module to `getWifiParams` also holds the Wi-Fi network name and password:
+  only the MAC address and the module version are kept from it.
+- **Stored in `/data`**: `rainbird-state.json`, what was learned about each
+  controller (its address, its identity — MAC address or serial number —, its
+  model and its zones), to publish its device while it does not answer.
+  Nothing else.
+- **Network**: requests go only to the module addresses typed in the
+  configuration, on the local network, to `/stick`, in HTTPS (the self-signed
+  certificate of the newer modules is accepted: the payload encryption with the
+  module password protects the exchange) or in HTTP. The integration opens no
+  port and calls no cloud service.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+the Rain Bird controllers, modules and app, and the other devices and services
+of your network.

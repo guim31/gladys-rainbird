@@ -1,0 +1,26 @@
+{
+  "password": "test-password",
+  "vectors": [
+    {
+      "direction": "request",
+      "plaintext": "{\"id\": 1, \"jsonrpc\": \"2.0\", \"method\": \"tunnelSip\", \"params\": {\"data\": \"02\", \"length\": 1}}",
+      "base64": "ZR5FQTbEJwP93Nkd+sAFYnjzeh60lcfwlt2mbWfdq2+ngdDEyV1yT8ybC9+xJVUQBDGsIVjyk+r1ucPWueHCot4iUZGXkKy92CyFPWUg4zFgC7fpaUDtcvi6jM5h9D6H/mRs5spPT7A3vkp3aAdaL1CAeu2jRwXhHLHGxZsAPtV2tF+KvIl7r8KPl91F/R10"
+    },
+    {
+      "direction": "response",
+      "plaintext": "{\"jsonrpc\": \"2.0\", \"result\": {\"data\": \"820005090C\"}, \"id\": 1} ",
+      "decoded_by_pyrainbird": {
+        "data": "820005090C"
+      },
+      "base64": "jb+nmnB+JcCeXXPEXs4+jFrGXdCR6Mak2hBRGmm/46Yrx7lA+DECJm59Wlpz8v6ftfSl4QE1bvVChVjpR7kYdRNd94afILs0i8/MS1lJqv5HgWcsov1md8AhhZKZk4sqdk9H5d56ip5aNQA4TTZk/Q=="
+    },
+    {
+      "direction": "response",
+      "plaintext": "{\"jsonrpc\": \"2.0\", \"result\": {\"data\": \"BF0004000000\"}, \"id\": 1}",
+      "decoded_by_pyrainbird": {
+        "data": "BF0004000000"
+      },
+      "base64": "T6/HKhEQiux9GCjuC5cix75+4OWUB/CzoOGqYnAtYfbd83eNudjZthjKoSEaCzARX2jUXJdFb0fwQP4iC2g+mwrtv2uRQ7tsZ+itZVq9D4LoJnVmlY3nUsBQKXDUF6x3vLWA1MZelDCa3by6q6ZuCw=="
+    }
+  ]
+}

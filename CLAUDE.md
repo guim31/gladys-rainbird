@@ -5,7 +5,8 @@ contributors.
 
 ## What this is
 
-A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
+A Gladys Assistant **external integration** for Rain Bird irrigation
+controllers with a LNK / LNK2 Wi-Fi module, over the local network: a Node.js service (Node 22+, ESM,
 no build step) that runs in its own sandboxed Docker container and talks to
 Gladys through
 [`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
@@ -16,8 +17,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/hub.test.js              # one file
+node --test --test-name-pattern "zone"    # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +32,29 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> the hub (also used by the tests)
+src/hub.js                        controllers, identity, reading timer, states, transitions -> scene events,
+                                  commands, deduplicated logs
+src/devices.js                    one device per controller: features, names (4 languages), values
+src/rainbird/client.js            local client: queue (one request at a time), HTTPS then HTTP, busy retries,
+                                  errors by kind
+src/rainbird/crypto.js            payload encryption (AES-256-CBC, key = SHA-256 of the password)
+src/rainbird/sip.js               controller commands tunnelled by `tunnelSip` (encode / decode, zone masks)
+src/rainbird/models.js            model table (limits), from pyrainbird
+src/rainbird/http.js              node:http / node:https POST (self-signed certificate accepted)
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    dashboard widget `rainbird` (manifest `widgets`)
+src/texts.js                      connection, error, report and action texts (4 languages)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/store.js                      /data/rainbird-state.json (identity, model, zones per slot)
+scripts/probe.mjs                 read-only probe of a real module (no command, nothing sensitive printed)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+                                  and helpers/fakeRainbird.js (encryption included, also on real HTTP)
+test/fixtures/rainbird/           answers of real controllers (pyrainbird, Home Assistant) and
+                                  payloads encrypted by pyrainbird
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +84,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in four languages (English, French, German,
+  Spanish): action messages, widget texts, feature names, manifest texts, and
+  `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md`, kept in sync
+  (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +249,46 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Rain Bird (propre à ce dépôt)
+
+- **Protocole** (celui de pyrainbird, MIT, réécrit) : `POST http(s)://<adresse>/stick`, corps
+  `application/octet-stream` = SHA-256(texte) ‖ IV ‖ AES-256-CBC(texte complété de NUL), clé =
+  SHA-256(mot de passe). Le texte est un JSON-RPC 2.0 : `tunnelSip` `{ data, length }` (une commande
+  du programmateur en hexadécimal, `length` en octets) ou `getWifiParams`. Le chiffrement est vérifié
+  **octet pour octet** contre le code de pyrainbird (`test/fixtures/rainbird/encryption-vectors.json`,
+  produit avec pycryptodome) : ne pas le modifier sans régénérer ces vecteurs.
+- **Une requête à la fois** : le module répond 503 (ou JSON-RPC -32002) quand il est occupé, et
+  l'appli Rain Bird peut être refusée pendant que Gladys le lit. File d'attente dans le client,
+  250 ms entre deux requêtes, 3 nouvelles tentatives sur « occupé », relève toutes les 1, 2 ou
+  5 minutes, jamais moins (environ 3 requêtes par relève, l'identité toutes les 6 h).
+- **HTTPS puis HTTP** sans préfixe dans l'adresse : les firmwares LNK2 récents ne servent que du
+  HTTPS auto-signé (`create_controller` de pyrainbird). On ne retombe sur HTTP qu'après un échec
+  TLS ou une connexion refusée, jamais après un délai dépassé (un module éteint ferait attendre
+  deux fois).
+- **Mot de passe faux** : 403 d'après pyrainbird, ou une réponse qui ne se déchiffre pas en JSON ;
+  les deux donnent l'erreur `auth`. Le vrai comportement est à confirmer avec `scripts/probe.mjs`
+  (il l'affiche sans le mot de passe).
+- **`getWifiParams` renvoie aussi le SSID et le mot de passe Wi-Fi** : seuls `macAddress` et
+  `stickVersion` sortent de `client.getWifiParams()`. Ne jamais journaliser la réponse brute.
+- **Identité** = MAC du module (comme Home Assistant, qui a migré du numéro de série vers la MAC :
+  des programmateurs répondent un numéro de série nul). Repli : numéro de série non nul, puis
+  emplacement. Un module occupé ou muet pendant l'identification **n'entraîne jamais** de repli
+  (il changerait l'`external_id`) : seul un `getWifiParams` absent (-32601) y conduit.
+- **Masques de zones** (0x83 zones câblées, 0xBF zones en cours) : 4 octets par page de 32 zones,
+  bit de poids faible du premier octet = zone 1. L'octet de page de la réponse n'est pas fiable
+  (`83017F000000` répond à la page 0 dans les tests de HA) : on garde la page demandée.
+- Le programmateur **n'a pas de commande « arrêter une zone »** : éteindre une zone = `40`, tout
+  arrêter. Lancer une zone = `39 <zone 2 octets> <minutes 1 octet>` (255 min au plus). Programme
+  = `38 <n>` avec A = 0. Délai de pluie = `37 <jours 2 octets>`.
+- Le programmateur montre une commande **quelques secondes après** (Home Assistant attend 5 s) :
+  état optimiste publié tout de suite, relecture 5 s plus tard, et seule cette relecture déclenche
+  les événements de scène.
+- Certains programmateurs refusent (NAK `00…`) la lecture du capteur de pluie ou du délai : la
+  fonctionnalité n'est alors pas créée (elle resterait vide). Détecté à l'identification.
+- `ManuallyRunStation` pendant qu'une autre zone arrose : remplace ou met en file selon le modèle
+  (non documenté) ; dit tel quel dans la doc.
+- Le validateur de widget du SDK exige des libellés **multilingues** pour les `options` d'un champ
+  de formulaire de bouton (une lettre « A » seule est refusée).
+- Le `setTimeout` d'attente entre deux requêtes ne doit **pas** être `unref()` : `scripts/probe.mjs`
+  (sans WebSocket pour tenir la boucle) s'arrêtait au milieu.
