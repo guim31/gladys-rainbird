@@ -1,6 +1,6 @@
 {
   "name": "gladys-rainbird",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Gladys Assistant integration for Rain Bird irrigation controllers with a LNK / LNK2 Wi-Fi module, over the local network.",
   "type": "module",

@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-15
+
 ### Added
 
 - Rain Bird irrigation controllers with a LNK or LNK2 Wi-Fi module, over the
@@ -31,4 +33,5 @@ the notes of the version's GitHub Release.
   Spanish.
 - Developed without the hardware: feedback welcome.
 
-[Unreleased]: https://github.com/guim31/gladys-rainbird/commits/main
+[Unreleased]: https://github.com/guim31/gladys-rainbird/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-rainbird/releases/tag/v1.0.1
