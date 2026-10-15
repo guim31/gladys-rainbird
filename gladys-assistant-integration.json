@@ -1,177 +1,767 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Rain Bird",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Rain Bird irrigation controllers (LNK Wi-Fi), locally: zones, rain sensor, rain delay, programs.",
+    "fr": "Programmateurs d'arrosage Rain Bird (Wi-Fi LNK), en local : zones, pluie, délai, programmes.",
+    "de": "Rain-Bird-Bewässerungssteuerungen (LNK-WLAN), lokal: Zonen, Regensensor, Regenpause, Programme.",
+    "es": "Programadores de riego Rain Bird (wifi LNK), en local: zonas, sensor de lluvia, retraso, programas."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "docker_image": "ghcr.io/guim31/gladys-rainbird:1.0.0",
+  "gladys_version": ">=5.2.0",
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-rainbird/main/cover.png",
+  "categories": ["appliances"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your Rain Bird controller",
+        "fr": "Votre programmateur Rain Bird",
+        "de": "Dein Rain-Bird-Steuergerät",
+        "es": "Su programador Rain Bird"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "A controller with a LNK or LNK2 Wi-Fi module, set up with the Rain Bird app. The module serves one client at a time: the app may have to wait while Gladys reads it.",
+        "fr": "Un programmateur avec module Wi-Fi LNK ou LNK2, installé avec l'appli Rain Bird. Le module ne sert qu'un client à la fois : l'appli peut devoir attendre pendant que Gladys le lit.",
+        "de": "Ein Steuergerät mit LNK- oder LNK2-WLAN-Modul, eingerichtet mit der Rain-Bird-App. Das Modul bedient nur einen Client gleichzeitig: Die App muss eventuell warten, während Gladys es liest.",
+        "es": "Un programador con módulo wifi LNK o LNK2, configurado con la aplicación Rain Bird. El módulo atiende a un solo cliente a la vez: la aplicación puede tener que esperar mientras Gladys lo lee."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://www.rainbird.com/products/lnk2-wifi-module",
+          "label": {
+            "en": "The LNK2 Wi-Fi module",
+            "fr": "Le module Wi-Fi LNK2",
+            "de": "Das LNK2-WLAN-Modul",
+            "es": "El módulo wifi LNK2"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "controller_1_host",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
+      "description": {
+        "en": "IP address of the Wi-Fi module on your network (see your router; a fixed address is best).",
+        "fr": "Adresse IP du module Wi-Fi sur votre réseau (voir votre box ; une adresse fixe est préférable).",
+        "de": "IP-Adresse des WLAN-Moduls in deinem Netzwerk (siehe Router; am besten eine feste Adresse).",
+        "es": "Dirección IP del módulo wifi en su red (consulte su router; mejor una dirección fija)."
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.20",
+        "fr": "ex. 192.168.1.20",
+        "de": "z. B. 192.168.1.20",
+        "es": "p. ej. 192.168.1.20"
+      },
       "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "default": ""
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "controller_1_password",
+      "type": "secret",
+      "label": {
+        "en": "Module password",
+        "fr": "Mot de passe du module",
+        "de": "Modul-Passwort",
+        "es": "Contraseña del módulo"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "description": {
+        "en": "The controller password chosen in the Rain Bird app, which encrypts every exchange.",
+        "fr": "Le mot de passe du programmateur choisi dans l'appli Rain Bird, qui chiffre chaque échange.",
+        "de": "Das Passwort des Steuergeräts aus der Rain-Bird-App, das jeden Austausch verschlüsselt.",
+        "es": "La contraseña del programador elegida en la aplicación Rain Bird, que cifra cada intercambio."
+      },
+      "required": true
     },
     {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "key": "controller_1_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom",
+        "de": "Name",
+        "es": "Nombre"
+      },
+      "description": {
+        "en": "Name of the device in Gladys. Empty: \"Rain Bird\" followed by the model.",
+        "fr": "Nom de l'appareil dans Gladys. Vide : « Rain Bird » suivi du modèle.",
+        "de": "Name des Geräts in Gladys. Leer: „Rain Bird“ gefolgt vom Modell.",
+        "es": "Nombre del dispositivo en Gladys. Vacío: «Rain Bird» seguido del modelo."
+      },
+      "placeholder": {
+        "en": "e.g. Garden",
+        "fr": "ex. Jardin",
+        "de": "z. B. Garten",
+        "es": "p. ej. Jardín"
+      },
       "required": false,
-      "default": "celsius",
+      "default": ""
+    },
+    {
+      "key": "controller_2",
+      "type": "section",
+      "label": {
+        "en": "Second controller (optional)",
+        "fr": "Deuxième programmateur (facultatif)",
+        "de": "Zweites Steuergerät (optional)",
+        "es": "Segundo programador (opcional)"
+      },
+      "description": {
+        "en": "Same fields, for another Rain Bird controller of your network.",
+        "fr": "Mêmes champs, pour un autre programmateur Rain Bird de votre réseau.",
+        "de": "Dieselben Felder, für ein weiteres Rain-Bird-Steuergerät in deinem Netzwerk.",
+        "es": "Los mismos campos, para otro programador Rain Bird de su red."
+      }
+    },
+    {
+      "key": "controller_2_host",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.21",
+        "fr": "ex. 192.168.1.21",
+        "de": "z. B. 192.168.1.21",
+        "es": "p. ej. 192.168.1.21"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "controller_2_password",
+      "type": "secret",
+      "label": {
+        "en": "Module password",
+        "fr": "Mot de passe du module",
+        "de": "Modul-Passwort",
+        "es": "Contraseña del módulo"
+      },
+      "required": false
+    },
+    {
+      "key": "controller_2_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom",
+        "de": "Name",
+        "es": "Nombre"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "controller_3",
+      "type": "section",
+      "label": {
+        "en": "Third controller (optional)",
+        "fr": "Troisième programmateur (facultatif)",
+        "de": "Drittes Steuergerät (optional)",
+        "es": "Tercer programador (opcional)"
+      },
+      "description": {
+        "en": "Same fields, for a third Rain Bird controller.",
+        "fr": "Mêmes champs, pour un troisième programmateur Rain Bird.",
+        "de": "Dieselben Felder, für ein drittes Rain-Bird-Steuergerät.",
+        "es": "Los mismos campos, para un tercer programador Rain Bird."
+      }
+    },
+    {
+      "key": "controller_3_host",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.22",
+        "fr": "ex. 192.168.1.22",
+        "de": "z. B. 192.168.1.22",
+        "es": "p. ej. 192.168.1.22"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "controller_3_password",
+      "type": "secret",
+      "label": {
+        "en": "Module password",
+        "fr": "Mot de passe du module",
+        "de": "Modul-Passwort",
+        "es": "Contraseña del módulo"
+      },
+      "required": false
+    },
+    {
+      "key": "controller_3_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom",
+        "de": "Name",
+        "es": "Nombre"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "options",
+      "type": "section",
+      "label": {
+        "en": "Options",
+        "fr": "Options",
+        "de": "Optionen",
+        "es": "Opciones"
+      }
+    },
+    {
+      "key": "zone_minutes",
+      "type": "number",
+      "label": {
+        "en": "Watering from a zone switch (min)",
+        "fr": "Arrosage par l'interrupteur d'une zone (min)",
+        "de": "Bewässerung per Zonenschalter (min)",
+        "es": "Riego desde el interruptor de una zona (min)"
+      },
+      "description": {
+        "en": "How long a zone waters when switched on in Gladys; the controller stops it by itself.",
+        "fr": "Durée d'arrosage d'une zone allumée dans Gladys ; le programmateur l'arrête tout seul.",
+        "de": "So lange bewässert eine in Gladys eingeschaltete Zone; das Steuergerät stoppt sie selbst.",
+        "es": "Cuánto riega una zona encendida en Gladys; el programador la detiene por sí solo."
+      },
+      "required": false,
+      "default": 10,
+      "min": 1,
+      "max": 240
+    },
+    {
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Reading interval",
+        "fr": "Intervalle de lecture",
+        "de": "Leseintervall",
+        "es": "Intervalo de lectura"
+      },
+      "description": {
+        "en": "How often the controllers are read. Longer leaves the module free for the Rain Bird app.",
+        "fr": "Fréquence de lecture des programmateurs. Plus long laisse le module libre pour l'appli Rain Bird.",
+        "de": "Wie oft die Steuergeräte gelesen werden. Länger lässt das Modul für die Rain-Bird-App frei.",
+        "es": "Frecuencia de lectura de los programadores. Más largo deja el módulo libre para la aplicación."
+      },
+      "required": false,
+      "default": "60",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "60",
+          "label": { "en": "1 minute", "fr": "1 minute", "de": "1 Minute", "es": "1 minuto" }
+        },
+        {
+          "value": "120",
+          "label": { "en": "2 minutes", "fr": "2 minutes", "de": "2 Minuten", "es": "2 minutos" }
+        },
+        {
+          "value": "300",
+          "label": { "en": "5 minutes", "fr": "5 minutes", "de": "5 Minuten", "es": "5 minutos" }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de funciones"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Names given to the features when the device is added to Gladys, and messages.",
+        "fr": "Noms donnés aux fonctionnalités quand l'appareil est ajouté à Gladys, et messages.",
+        "de": "Namen der Funktionen, wenn das Gerät zu Gladys hinzugefügt wird, und Meldungen.",
+        "es": "Nombres de las funciones cuando el dispositivo se añade a Gladys, y mensajes."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": { "en": "English", "fr": "Anglais", "de": "Englisch", "es": "Inglés" }
+        },
+        {
+          "value": "fr",
+          "label": { "en": "French", "fr": "Français", "de": "Französisch", "es": "Francés" }
+        },
+        {
+          "value": "de",
+          "label": { "en": "German", "fr": "Allemand", "de": "Deutsch", "es": "Alemán" }
+        },
+        {
+          "value": "es",
+          "label": { "en": "Spanish", "fr": "Espagnol", "de": "Spanisch", "es": "Español" }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "description": {
+        "en": "Reads every controller now: model, zones, watering, rain sensor and rain delay.",
+        "fr": "Lit chaque programmateur maintenant : modèle, zones, arrosage, capteur de pluie et délai.",
+        "de": "Liest jedes Steuergerät jetzt: Modell, Zonen, Bewässerung, Regensensor und Regenpause.",
+        "es": "Lee cada programador ahora: modelo, zonas, riego, sensor de lluvia y retraso."
+      },
+      "timeout_seconds": 90
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "watering_started",
+      "label": {
+        "en": "Rain Bird watering started",
+        "fr": "Arrosage Rain Bird démarré",
+        "de": "Rain-Bird-Bewässerung gestartet",
+        "es": "Riego Rain Bird iniciado"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A zone starts watering, by the controller schedule or the app, or by Gladys.",
+        "fr": "Une zone commence à arroser, par le programme du programmateur ou l'appli, ou par Gladys.",
+        "de": "Eine Zone beginnt zu bewässern, durch den Zeitplan, die App oder durch Gladys.",
+        "es": "Una zona empieza a regar, por el programa del programador o la aplicación, o por Gladys."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Controller",
+            "fr": "Programmateur",
+            "de": "Steuergerät",
+            "es": "Programador"
+          }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "zone",
+          "type": "number",
+          "min": 1,
+          "max": 240,
+          "label": { "en": "Zone", "fr": "Zone", "de": "Zone", "es": "Zona" }
+        },
+        {
+          "key": "origin",
+          "type": "select",
+          "label": {
+            "en": "Started by",
+            "fr": "Lancé par",
+            "de": "Gestartet durch",
+            "es": "Iniciado por"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "controller",
+              "label": {
+                "en": "The controller (schedule, app)",
+                "fr": "Le programmateur (programme, appli)",
+                "de": "Das Steuergerät (Zeitplan, App)",
+                "es": "El programador (programa, aplicación)"
+              }
+            },
+            {
+              "value": "gladys",
+              "label": { "en": "Gladys", "fr": "Gladys", "de": "Gladys", "es": "Gladys" }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "zone",
+          "type": "number",
+          "label": { "en": "Zone", "fr": "Zone", "de": "Zone", "es": "Zona" }
+        },
+        {
+          "key": "origin",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Started by",
+            "fr": "Lancé par",
+            "de": "Gestartet durch",
+            "es": "Iniciado por"
+          }
+        },
+        {
+          "key": "controller",
+          "type": "string",
+          "label": {
+            "en": "Controller name",
+            "fr": "Nom du programmateur",
+            "de": "Name des Steuergeräts",
+            "es": "Nombre del programador"
+          }
+        }
+      ]
+    },
+    {
+      "key": "watering_finished",
+      "label": {
+        "en": "Rain Bird watering finished",
+        "fr": "Arrosage Rain Bird terminé",
+        "de": "Rain-Bird-Bewässerung beendet",
+        "es": "Riego Rain Bird terminado"
+      },
+      "description": {
+        "en": "A zone stops watering, with how long it watered as seen by Gladys.",
+        "fr": "Une zone cesse d'arroser, avec la durée d'arrosage vue par Gladys.",
+        "de": "Eine Zone hört auf zu bewässern, mit der von Gladys gesehenen Dauer.",
+        "es": "Una zona deja de regar, con la duración del riego vista por Gladys."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Controller",
+            "fr": "Programmateur",
+            "de": "Steuergerät",
+            "es": "Programador"
+          }
+        },
+        {
+          "key": "zone",
+          "type": "number",
+          "min": 1,
+          "max": 240,
+          "label": { "en": "Zone", "fr": "Zone", "de": "Zone", "es": "Zona" }
+        },
+        {
+          "key": "origin",
+          "type": "select",
+          "label": {
+            "en": "Started by",
+            "fr": "Lancé par",
+            "de": "Gestartet durch",
+            "es": "Iniciado por"
+          },
+          "options": [
+            {
+              "value": "controller",
+              "label": {
+                "en": "The controller (schedule, app)",
+                "fr": "Le programmateur (programme, appli)",
+                "de": "Das Steuergerät (Zeitplan, App)",
+                "es": "El programador (programa, aplicación)"
+              }
+            },
+            {
+              "value": "gladys",
+              "label": { "en": "Gladys", "fr": "Gladys", "de": "Gladys", "es": "Gladys" }
+            }
+          ]
+        }
+      ],
+      "variables": [
+        {
+          "key": "zone",
+          "type": "number",
+          "label": { "en": "Zone", "fr": "Zone", "de": "Zone", "es": "Zona" }
+        },
+        {
+          "key": "minutes",
+          "type": "number",
+          "label": {
+            "en": "Minutes watered",
+            "fr": "Minutes d'arrosage",
+            "de": "Bewässerte Minuten",
+            "es": "Minutos de riego"
+          },
+          "description": {
+            "en": "Empty when the watering started before the integration.",
+            "fr": "Vide si l'arrosage a commencé avant l'intégration.",
+            "de": "Leer, wenn die Bewässerung vor der Integration begann.",
+            "es": "Vacío si el riego empezó antes que la integración."
+          }
+        },
+        {
+          "key": "origin",
+          "type": "string",
+          "label": {
+            "en": "Started by",
+            "fr": "Lancé par",
+            "de": "Gestartet durch",
+            "es": "Iniciado por"
+          }
+        },
+        {
+          "key": "controller",
+          "type": "string",
+          "label": {
+            "en": "Controller name",
+            "fr": "Nom du programmateur",
+            "de": "Name des Steuergeräts",
+            "es": "Nombre del programador"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "water_zone",
+      "label": {
+        "en": "Water a Rain Bird zone",
+        "fr": "Arroser une zone Rain Bird",
+        "de": "Rain-Bird-Zone bewässern",
+        "es": "Regar una zona Rain Bird"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Waters one zone for the minutes chosen; the controller stops it by itself.",
+        "fr": "Arrose une zone pendant les minutes choisies ; le programmateur l'arrête tout seul.",
+        "de": "Bewässert eine Zone für die gewählten Minuten; das Steuergerät stoppt sie selbst.",
+        "es": "Riega una zona durante los minutos elegidos; el programador la detiene por sí solo."
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": {
+            "en": "Controller",
+            "fr": "Programmateur",
+            "de": "Steuergerät",
+            "es": "Programador"
+          },
           "required": true
+        },
+        {
+          "key": "zone",
+          "type": "number",
+          "min": 1,
+          "max": 240,
+          "label": { "en": "Zone", "fr": "Zone", "de": "Zone", "es": "Zona" },
+          "required": true
+        },
+        {
+          "key": "minutes",
+          "type": "number",
+          "min": 1,
+          "max": 240,
+          "default": 10,
+          "label": {
+            "en": "Duration (minutes)",
+            "fr": "Durée (minutes)",
+            "de": "Dauer (Minuten)",
+            "es": "Duración (minutos)"
+          }
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "minutes",
+          "type": "number",
+          "label": {
+            "en": "Minutes requested",
+            "fr": "Minutes demandées",
+            "de": "Angeforderte Minuten",
+            "es": "Minutos solicitados"
+          }
+        }
+      ]
+    },
+    {
+      "key": "stop_watering",
+      "label": {
+        "en": "Stop Rain Bird watering",
+        "fr": "Arrêter l'arrosage Rain Bird",
+        "de": "Rain-Bird-Bewässerung stoppen",
+        "es": "Detener el riego Rain Bird"
+      },
+      "description": {
+        "en": "Stops every zone of a controller, or of all of them when none is chosen.",
+        "fr": "Arrête toutes les zones d'un programmateur, ou de tous si aucun n'est choisi.",
+        "de": "Stoppt alle Zonen eines Steuergeräts, oder aller, wenn keines gewählt ist.",
+        "es": "Detiene todas las zonas de un programador, o de todos si no se elige ninguno."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Controller (empty: all)",
+            "fr": "Programmateur (vide : tous)",
+            "de": "Steuergerät (leer: alle)",
+            "es": "Programador (vacío: todos)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "controllers",
+          "type": "number",
+          "label": {
+            "en": "Controllers stopped",
+            "fr": "Programmateurs arrêtés",
+            "de": "Gestoppte Steuergeräte",
+            "es": "Programadores detenidos"
+          }
+        }
+      ]
+    },
+    {
+      "key": "run_program",
+      "label": {
+        "en": "Run a Rain Bird program",
+        "fr": "Lancer un programme Rain Bird",
+        "de": "Rain-Bird-Programm starten",
+        "es": "Iniciar un programa Rain Bird"
+      },
+      "description": {
+        "en": "Starts a program of the controller now, as at its start time.",
+        "fr": "Lance un programme du programmateur maintenant, comme à son heure de départ.",
+        "de": "Startet ein Programm des Steuergeräts jetzt, wie zu seiner Startzeit.",
+        "es": "Inicia ahora un programa del programador, como a su hora de inicio."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Controller",
+            "fr": "Programmateur",
+            "de": "Steuergerät",
+            "es": "Programador"
+          },
+          "required": true
+        },
+        {
+          "key": "program",
+          "type": "select",
+          "default": "A",
+          "label": { "en": "Program", "fr": "Programme", "de": "Programm", "es": "Programa" },
+          "options": [
+            { "value": "A", "label": { "en": "A", "fr": "A", "de": "A", "es": "A" } },
+            { "value": "B", "label": { "en": "B", "fr": "B", "de": "B", "es": "B" } },
+            { "value": "C", "label": { "en": "C", "fr": "C", "de": "C", "es": "C" } },
+            { "value": "D", "label": { "en": "D", "fr": "D", "de": "D", "es": "D" } },
+            { "value": "E", "label": { "en": "E", "fr": "E", "de": "E", "es": "E" } },
+            { "value": "F", "label": { "en": "F", "fr": "F", "de": "F", "es": "F" } },
+            { "value": "G", "label": { "en": "G", "fr": "G", "de": "G", "es": "G" } },
+            { "value": "H", "label": { "en": "H", "fr": "H", "de": "H", "es": "H" } }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "set_rain_delay",
+      "label": {
+        "en": "Set the Rain Bird rain delay",
+        "fr": "Régler le délai de pluie Rain Bird",
+        "de": "Rain-Bird-Regenpause einstellen",
+        "es": "Ajustar el retraso por lluvia Rain Bird"
+      },
+      "description": {
+        "en": "Pauses the schedule for a number of days (0 cancels the delay).",
+        "fr": "Suspend le programme un nombre de jours (0 annule le délai).",
+        "de": "Pausiert den Zeitplan für einige Tage (0 hebt die Pause auf).",
+        "es": "Suspende el programa durante unos días (0 cancela el retraso)."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Controller",
+            "fr": "Programmateur",
+            "de": "Steuergerät",
+            "es": "Programador"
+          },
+          "required": true
+        },
+        {
+          "key": "days",
+          "type": "number",
+          "min": 0,
+          "max": 30,
+          "default": 1,
+          "label": { "en": "Days", "fr": "Jours", "de": "Tage", "es": "Días" }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "days",
+          "type": "number",
+          "label": {
+            "en": "Days set",
+            "fr": "Jours réglés",
+            "de": "Eingestellte Tage",
+            "es": "Días ajustados"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "rainbird",
+      "label": {
+        "en": "Rain Bird",
+        "fr": "Rain Bird",
+        "de": "Rain Bird",
+        "es": "Rain Bird"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Zones watering, rain sensor and delay; water a zone, stop, run a program.",
+        "fr": "Zones en arrosage, pluie et délai ; arroser une zone, arrêter, lancer un programme.",
+        "de": "Bewässerte Zonen, Regen und Pause; Zone bewässern, stoppen, Programm starten.",
+        "es": "Zonas regando, lluvia y retraso; regar una zona, detener, iniciar un programa."
+      },
+      "icon": "droplet",
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Controller (empty: the first)",
+            "fr": "Programmateur (vide : le premier)",
+            "de": "Steuergerät (leer: das erste)",
+            "es": "Programador (vacío: el primero)"
+          }
+        }
+      ],
+      "action_timeout_seconds": 30
     }
   ]
 }

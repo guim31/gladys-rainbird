@@ -1,61 +1,168 @@
-# Demo Devices Template
+# Rain Bird
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Follow and control your **Rain Bird irrigation controller** from Gladys, over
+your local network: see which zone is watering, whether the rain sensor
+detects rain and whether a rain delay pauses the schedule; water one zone for
+a few minutes, stop everything, start a program, or pause the schedule for the
+rainy days ahead. No Rain Bird account, no cloud: Gladys talks to the
+controller's Wi-Fi module directly.
 
-## What you get
+> **Developed without the hardware: feedback welcome.** This integration was
+> built from the protocol of the open-source library
+> [pyrainbird](https://github.com/allenporter/pyrainbird) and the answers of
+> real controllers recorded in its tests and in those of Home Assistant, not
+> on a real controller. If something does not work as described, please say so
+> on the [Gladys forum](https://community.gladysassistant.com) or in the
+> [issues](https://github.com/guim31/gladys-rainbird/issues).
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+This integration is not affiliated with, nor endorsed by, Rain Bird
+Corporation.
 
-## Configuration
+## What you need
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+- Gladys Assistant 5.2.0 or later.
+- A Rain Bird controller with a **LNK or LNK2 Wi-Fi module** (ESP-TM2, ESP-Me,
+  ESP-ME3, ESP-RZXe, ST8x-WiFi, ARC8, TRU…), already set up with the Rain Bird
+  app and connected to your Wi-Fi.
+- The **IP address** of the module on your network: look for it in your
+  router's list of devices. Give it a fixed address (DHCP reservation) so it
+  does not change.
+- The **controller password** chosen in the Rain Bird app when the module was
+  set up. It encrypts every exchange with the module.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+The module serves **one client at a time** and answers slowly. While Gladys
+reads it (a few seconds each minute by default), the Rain Bird app may have to
+wait or show an error: try again a moment later, or choose a longer reading
+interval.
 
-## Actions
+## Set up
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+1. Install the integration from the Gladys catalog.
+2. In **Configuration**, enter the **Address** of the module (for example
+   `192.168.1.20`), its **Module password**, and optionally a **Name**. Two or
+   three controllers? Fill in the _Second controller_ and _Third controller_
+   sections too.
+3. Choose the options: **Watering from a zone switch (min)** (10 by default),
+   the **Reading interval** (1 minute by default, 2 or 5 minutes to leave the
+   module freer for the app) and the **Language of the feature names**.
+4. Save, then click **Test the connection**: the message under the button says,
+   for each controller, its model, its zones, what is watering, the rain sensor
+   and the rain delay.
+5. Open the **Discover** tab: one device per controller. Click **Add**, pick a
+   room, save.
 
-## Scenes
+The address can also be written `https://192.168.1.20` or
+`http://192.168.1.20`: without a scheme, the integration tries HTTPS first (the
+newer LNK2 firmwares, with their self-signed certificate) then HTTP (the older
+ones), and keeps the one that answers.
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+## The device of each controller
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+The device is named after the **Name** of the configuration, or "Rain Bird"
+followed by the model. It is identified by the MAC address of its Wi-Fi module:
+giving the controller another address keeps the device and its history.
+
+| Feature                                                        | What it does                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Zone 1**, **Zone 2**… (one per zone wired on the controller) | A switch, on while the zone waters. Turning it on waters the zone for the minutes of the configuration (the controller stops it by itself); turning it off **stops the watering of every zone**: the controller has no "stop this zone only" command. |
+| **Rain sensor**                                                | On (1) when the rain sensor wired to the controller detects rain. Stays off without a sensor. Absent when the controller refuses this reading.                                                                                                        |
+| **Rain delay**                                                 | The days the schedule stays paused (0: none). A slider from 0 to 14 days (30 on the BAT-PRO and LX models): moving it sets the delay on the controller.                                                                                               |
+| **Online**                                                     | On while the controller answers; off after two readings in a row without answer.                                                                                                                                                                      |
+| **Stop watering**                                              | A button: stops every zone.                                                                                                                                                                                                                           |
+| **Run program A**, **Run program B**…                          | A button per program of the model (A to H at most; none on the ESP-RZXe and ST8x-WiFi, which schedule each zone on its own): starts the program now, as at its start time.                                                                            |
+
+Rain Bird names the zones in its app, in the cloud: the integration does not
+read them. Rename the features in Gladys (device settings) to "Lawn",
+"Vegetable garden"…
+
+The features are created in the **Language of the feature names** of the
+configuration (French by default) and keep their name afterwards.
 
 ## Dashboard
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+The **Rain Bird** widget shows one controller (the one chosen in its settings,
+or the first of the configuration):
+
+- the zones, those watering first, with a **Watering** or **Idle** badge (8 at
+  most; the number of the others is shown below);
+- the rain sensor, the rain delay, and the connection when the controller does
+  not answer;
+- four buttons: **Water…** (choose the zone and the minutes), **Stop**
+  (every zone; a check mark when nothing waters), **Program…** (choose the
+  program; absent when the model has none) and **Rain delay…** (choose the
+  days, 0 cancels the delay).
+
+## Scenes
+
+### Triggers
+
+- **Rain Bird watering started**: a zone starts watering. Filters: the
+  controller, the zone, and **Started by**: _The controller (schedule, app)_ or
+  _Gladys_. Information passed on: the zone, who started it, the controller
+  name.
+- **Rain Bird watering finished**: a zone stops watering. Same filters.
+  Information passed on: the zone, the **minutes watered** as seen by Gladys
+  (to the reading interval; empty when the watering started before the
+  integration), who started it, the controller name.
+
+A watering is seen at the next reading: with a one-minute interval, a start or
+an end shows up within a minute. A zone switch already gives "zone on/off" to
+the scenes; these triggers add who started it, how long it watered, and one
+trigger for every zone.
+
+### Actions
+
+- **Water a Rain Bird zone**: a controller, a zone number, a duration in
+  minutes (10 by default). The controller stops the zone by itself.
+- **Stop Rain Bird watering**: every zone of a controller, or of all of them
+  when the controller is left empty.
+- **Run a Rain Bird program**: a controller and a program (A to H).
+- **Set the Rain Bird rain delay**: a controller and a number of days (0
+  cancels the delay; capped at the model's limit).
+
+### Scene ideas
+
+- **Rain forecast**: when the weather forecast announces rain for tomorrow,
+  **Set the Rain Bird rain delay** to 2 days.
+- **Someone in the garden**: when the garden gate opens, **Stop Rain Bird
+  watering**.
+- **Watering report**: on **Rain Bird watering finished** started by _The
+  controller_, send a message "Zone {zone} watered {minutes} min".
+- **Seedlings**: every day at 2 pm in a heatwave, **Water a Rain Bird zone**:
+  the vegetable garden zone for 5 minutes.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"does not answer"**: check the address (it may have changed: give the
+  module a fixed address in your router), that the controller is powered and
+  that its Wi-Fi light is on. Gladys must be able to reach the module's network.
+- **"password refused (or not a Rain Bird module)"**: type the controller
+  password again (the one of the Rain Bird app, case-sensitive). Also check
+  that the address is the Rain Bird module's. After a refused password, the integration tries again only every 10 minutes (the module can lock out repeated attempts); saving the configuration tries at once.
+- **"busy with another client"**: the Rain Bird app (or another home automation
+  system) was talking to the module. The integration retries a few times, then
+  at the next reading. Two systems reading the module every minute will keep
+  getting in each other's way: keep one.
+- **The Rain Bird app cannot connect**: the module is busy with Gladys for a few
+  seconds; try again, or choose a reading interval of 2 or 5 minutes.
+- **A zone switch flips back**: the controller refused or ignored the command. The integration checks the controller five seconds after each command and shows
+  what it really does.
+- **A new zone is missing**: click **Search** in the Discover tab (or **Test the
+  connection**), then **Update** the device.
+- **More details**: start the integration with `LOG_LEVEL=debug` to see every
+  reading in its logs. Passwords and Wi-Fi settings never appear there.
+
+## Limits
+
+- **Developed without the hardware: feedback welcome.** Tested against the
+  recorded answers of real controllers, not against a real controller.
+- Local network only, through a LNK or LNK2 Wi-Fi module: a controller without
+  one (Bluetooth only, or cloud only) is not reachable this way.
+- The integration reads the controller at most once a minute (the module
+  serves one client at a time): a watering started from the controller shows
+  up within the reading interval.
+- No zone names (they live in the Rain Bird cloud) and no schedule editing.
+- Turning a zone off stops every zone (the only stop command of the
+  controller). Starting a zone while another waters: depending on the model,
+  the controller stops it or queues the new one.
+- Durations from 1 to 240 minutes (fewer if the model's limit is lower).
